@@ -1,2 +1,1 @@
-# llm-poc
-LLM proof-of-concept
+Code beschikbaar op 2 september.
