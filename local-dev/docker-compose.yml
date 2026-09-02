@@ -1,0 +1,133 @@
+name: archeo-local-dev
+
+services:
+
+  postgres:
+    image: postgres:18.6-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./data/postgres:/var/lib/postgresql
+      - ./config/postgres/:/docker-entrypoint-initdb.d/:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U seaweed -d seaweed -h postgres" ]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.4.6
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - ./data/elasticsearch:/usr/share/elasticsearch/data
+
+  seaweedfs_master:
+    image: chrislusf/seaweedfs:4.44
+    command: master -ip=seaweedfs_master
+    ports:
+      - "9333:9333"
+      - "19333:19333"
+    volumes:
+      - ./data/seaweed_master:/data
+
+  seaweedfs_volume:
+    image: chrislusf/seaweedfs:4.44
+    command: volume -mserver=seaweedfs_master:9333 -port=8080 -ip=seaweedfs_volume
+    ports:
+      - "8080:8080"
+      - "18080:18080"
+    volumes:
+      - ./data/seaweed_volume:/data
+    depends_on:
+      - seaweedfs_master
+
+  seaweedfs_filer:
+    image: chrislusf/seaweedfs:4.44
+    command: filer -master=seaweedfs_master:9333 -ip=seaweedfs_filer
+    volumes:
+      - ./config/seaweedfs_filer/filer.toml:/etc/seaweedfs/filer.toml:ro
+      # Enable volume mapping when using LevelDB, instead of Postgres
+      #      - ./data/seaweed_filer:/data
+    ports:
+      - "8888:8888"
+      - "18888:18888"
+    depends_on:
+      seaweedfs_master:
+        condition: service_started
+      seaweedfs_volume:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+
+  seaweedfs_s3:
+    image: chrislusf/seaweedfs:4.44
+    command: s3 -filer=seaweedfs_filer:8888 -ip=seaweedfs_s3 -port=8333 -iam.config=/etc/seaweedfs/s3-users.json
+    volumes:
+      - ./config/seaweedfs_s3/s3-users.json:/etc/seaweedfs/s3-users.json:ro
+    ports:
+      - "8333:8333"
+    depends_on:
+      - seaweedfs_filer
+
+  #  prometheus:
+  #    image: prom/prometheus:v3.14.0-distroless
+  #    volumes:
+  #      - ./prometheus:/etc/prometheus
+  #    command:
+  #      - '--config.file=/etc/prometheus/prometheus.yml'
+  #    ports:
+  #      - '9090:9090'
+
+  cadence:
+    image: ubercadence/server:v1.4.1-auto-setup
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+      - "8003:8003"
+      - "7933:7933"
+      - "7934:7934"
+      - "7935:7935"
+      - "7939:7939"
+      - "7833:7833"
+    environment:
+      - "DB=postgres"
+      - "DB_PORT=5432"
+      - "POSTGRES_USER=postgres"
+      - "POSTGRES_PWD=postgres"
+      - "POSTGRES_SEEDS=postgres"
+      #      - "PROMETHEUS_ENDPOINT_0=0.0.0.0:8000"
+      #      - "PROMETHEUS_ENDPOINT_1=0.0.0.0:8001"
+      #      - "PROMETHEUS_ENDPOINT_2=0.0.0.0:8002"
+      #      - "PROMETHEUS_ENDPOINT_3=0.0.0.0:8003"
+      - "DYNAMIC_CONFIG_FILE_PATH=dynamicconfig/development.yaml"
+    depends_on:
+      - postgres
+  #      - prometheus
+  #
+  #  cadence-web:
+  #    image: ubercadence/web:v3.35.6
+  #    environment:
+  #      - "CADENCE_GRPC_PEERS=cadence:7833"
+  #      - "CADENCE_HISTORY_PAGE_V2_ENABLED=OPT_OUT"
+  #    ports:
+  #      - "8088:8088"
+  #    depends_on:
+  #      - cadence
+  #  grafana:
+  #    image: grafana/grafana:13.0.7-slim
+  #    volumes:
+  #      - ./grafana:/etc/grafana
+  #    user: "1000"
+  #    depends_on:
+  #      - prometheus
+  #    ports:
+  #      - '3000:3000'

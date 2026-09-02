@@ -1,0 +1,19 @@
+type Query {
+    getDocument(id: ID!): Document
+
+    listDocuments(page: Int!, size:Int!): DocumentPage!
+}
+
+type Mutation {
+    syncInbox: Boolean!
+}
+
+type Document {
+    id: ID!
+    filename: String!
+    status: String
+}
+
+type DocumentPage {
+    items: [Document]
+}

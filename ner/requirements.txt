@@ -1,0 +1,6 @@
+torch == 2.13.0
+transformers == 5.16.1
+fastapi[standard] == 0.141.1
+unstructured[pdf] == 0.18.32
+uvicorn == 0.52.4
+cadence_python_client == 0.3.0

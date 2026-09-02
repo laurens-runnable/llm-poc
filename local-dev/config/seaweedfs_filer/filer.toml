@@ -1,0 +1,11 @@
+[leveldb2]
+enabled = false
+[postgres]
+enabled = true
+createTable = false
+username = "seaweed"
+password = "seaweed"
+database = "seaweed"
+hostname = "postgres"
+port = 5432
+sslmode = "disable"
