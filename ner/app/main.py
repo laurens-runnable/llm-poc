@@ -8,7 +8,7 @@ import logging
 
 CADENCE_DOMAIN = "archeo-domain"
 CADENCE_TARGET = "localhost:7833"
-CADENCE_WORKFLOW = "DocumentWorkflow::setNamedEntities"
+CADENCE_WORKFLOW = "ReportWorkflow::setNamedEntities"
 
 logging.basicConfig()
 logging.root.setLevel(logging.WARNING)
@@ -62,8 +62,7 @@ async def process_content(workflow_id: str, content_type: str, body: bytes):
     entities = ner_pipeline(text)
     for entity in entities:
         named_entities.append({
-            "group": entity['entity_group'],
-            "word": entity['word'],
+            entity['entity_group']: entity['word'],
         })
 
     logger.info("Sending %s signal: %s", CADENCE_WORKFLOW, named_entities)

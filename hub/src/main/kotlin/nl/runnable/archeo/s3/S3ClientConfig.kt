@@ -25,6 +25,7 @@ class S3ClientConfig {
         S3Client
             .builder()
             .endpointOverride(URI.create(endpoint))
+            // Region must be provided, even for self-hosted S3 instances
             .region(Region.EU_CENTRAL_1)
             .forcePathStyle(true)
             .credentialsProvider(

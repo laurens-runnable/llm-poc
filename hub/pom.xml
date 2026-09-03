@@ -25,6 +25,7 @@
         <postgresql.version>42.7.13</postgresql.version>
         <kotlin-logging-jvm.version>8.0.4</kotlin-logging-jvm.version>
         <amazon-s3.version>2.54.7</amazon-s3.version>
+        <hypersistence-utils.version>3.15.5</hypersistence-utils.version>
     </properties>
 
     <dependencies>
@@ -46,6 +47,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.hypersistence</groupId>
+            <artifactId>hypersistence-utils-hibernate-73</artifactId>
+            <version>${hypersistence-utils.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -1,7 +1,7 @@
-package nl.runnable.archeo.document.graphql
+package nl.runnable.archeo.report.graphql
 
-import nl.runnable.archeo.document.DocumentHelper
-import nl.runnable.archeo.document.jpa.DocumentEntityRepository
+import nl.runnable.archeo.report.ReportHelper
+import nl.runnable.archeo.report.jpa.ReportEntityRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.graphql.data.method.annotation.Argument
@@ -11,24 +11,24 @@ import org.springframework.stereotype.Controller
 import java.util.UUID
 
 @Controller
-class DocumentController(
-    private val repository: DocumentEntityRepository,
-    private val helper: DocumentHelper,
+class ReportController(
+    private val repository: ReportEntityRepository,
+    private val helper: ReportHelper,
 ) {
     @QueryMapping
-    fun getDocument(
+    fun getReport(
         @Argument id: UUID,
-    ): Document? = repository.findByIdOrNull(id)?.toDocument()
+    ): Report? = repository.findByIdOrNull(id)?.toReport()
 
     @QueryMapping
-    fun listDocuments(
+    fun listReports(
         @Argument page: Int,
         @Argument size: Int,
-    ): DocumentPage = repository.findAll(PageRequest.of(page, size)).toDocumentPage()
+    ): ReportPage = repository.findAll(PageRequest.of(page, size)).toReportPage()
 
     @MutationMapping
-    fun acquireDocuments(): Boolean {
-        helper.acquireDocuments()
+    fun acquireReports(): Boolean {
+        helper.acquireReports()
         return true
     }
 
@@ -39,10 +39,10 @@ class DocumentController(
     }
 
     @MutationMapping
-    fun approveDocument(
+    fun approveReport(
         @Argument id: UUID,
     ): Boolean {
-        helper.approveDocument(id)
+        helper.approveReport(id)
         return true
     }
 }

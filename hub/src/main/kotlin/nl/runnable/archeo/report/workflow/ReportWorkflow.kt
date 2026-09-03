@@ -1,4 +1,4 @@
-package nl.runnable.archeo.document.workflow
+package nl.runnable.archeo.report.workflow
 
 import com.uber.cadence.workflow.SignalMethod
 import com.uber.cadence.workflow.Workflow
@@ -6,9 +6,9 @@ import com.uber.cadence.workflow.WorkflowMethod
 import org.slf4j.Logger
 import java.util.UUID
 
-interface DocumentWorkflow {
+interface ReportWorkflow {
     @WorkflowMethod
-    fun editMetadata(documentId: UUID)
+    fun editMetadata(reportId: UUID)
 
     @SignalMethod
     fun setNamedEntities(entities: List<Map<String, String>>)
@@ -17,27 +17,27 @@ interface DocumentWorkflow {
     fun approve()
 }
 
-private val workflowLogger: Logger = Workflow.getLogger(DocumentWorkflowImpl::class.java)
+private val workflowLogger: Logger = Workflow.getLogger(ReportWorkflowImpl::class.java)
 
-class DocumentWorkflowImpl : DocumentWorkflow {
-    val activity = Workflow.newActivityStub(DocumentActivity::class.java)!!
+class ReportWorkflowImpl : ReportWorkflow {
+    val activity = Workflow.newActivityStub(ReportActivity::class.java)!!
 
     var namedEntities = ArrayList<Map<String, String>>()
 
     var approved = false
 
-    override fun editMetadata(documentId: UUID) {
-        workflowLogger.info("Document workflow started: {}", documentId)
+    override fun editMetadata(reportId: UUID) {
+        workflowLogger.info("Report workflow started: {}", reportId)
 
-        activity.extractNamedEntities(documentId, Workflow.getWorkflowInfo().workflowId)
+        activity.extractNamedEntities(reportId, Workflow.getWorkflowInfo().workflowId)
         Workflow.await { namedEntities.isNotEmpty() }
         workflowLogger.info("Saving Named Entities: {}", namedEntities)
-        activity.saveNamedEntities(documentId, namedEntities)
+        activity.saveNamedEntities(reportId, namedEntities)
 
         Workflow.await { approved }
-        activity.approve(documentId)
+        activity.approve(reportId)
 
-        workflowLogger.info("Document workflow completed: {}", documentId)
+        workflowLogger.info("Report workflow completed: {}", reportId)
     }
 
     override fun setNamedEntities(entities: List<Map<String, String>>) {

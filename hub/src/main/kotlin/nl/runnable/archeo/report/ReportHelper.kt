@@ -1,16 +1,14 @@
-package nl.runnable.archeo.document
+package nl.runnable.archeo.report
 
 import com.uber.cadence.client.WorkflowClient
 import com.uber.cadence.client.WorkflowOptions
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
-import jakarta.persistence.EntityNotFoundException
 import nl.runnable.archeo.AsyncExecutors
-import nl.runnable.archeo.document.jpa.DocumentEntity
-import nl.runnable.archeo.document.jpa.DocumentEntityRepository
-import nl.runnable.archeo.document.workflow.DocumentWorkflow
+import nl.runnable.archeo.report.jpa.ReportEntity
+import nl.runnable.archeo.report.jpa.ReportEntityRepository
+import nl.runnable.archeo.report.workflow.ReportWorkflow
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import software.amazon.awssdk.services.s3.S3Client
@@ -21,13 +19,14 @@ import software.amazon.awssdk.services.s3.model.NoSuchBucketException
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 import java.time.Duration
 import java.util.UUID
+import kotlin.jvm.java
 
 private val logger = KotlinLogging.logger {}
 
 @Component
-class DocumentHelper(
+class ReportHelper(
     private val s3Client: S3Client,
-    private val repository: DocumentEntityRepository,
+    private val repository: ReportEntityRepository,
     private val workflowClient: WorkflowClient,
 ) {
     @Value($$"${workflow.source-bucket}")
@@ -52,7 +51,7 @@ class DocumentHelper(
     }
 
     @Async(AsyncExecutors.SINGLE)
-    fun acquireDocuments() {
+    fun acquireReports() {
         val response: ListObjectsResponse =
             try {
                 s3Client
@@ -91,7 +90,7 @@ class DocumentHelper(
             logger.info { "Deleting ${item.key()} from '$sourceBucket'" }
             s3Client.deleteObject { request -> request.bucket(sourceBucket).key(item.key()) }
             repository.save(
-                DocumentEntity().apply {
+                ReportEntity().apply {
                     id = UUID.randomUUID()
                     filename = item.key()
                 },
@@ -102,7 +101,7 @@ class DocumentHelper(
     @Async(AsyncExecutors.SINGLE)
     fun startWorkflows() {
         for (document in repository.findByWorkflowIdIsNullAndApprovedIsFalse()) {
-            logger.info { ("Starting DocumentWorkflow::editMetadata for ${document.id}") }
+            logger.info { ("Starting ReportWorkflow::editMetadata for ${document.id}") }
 
             val options =
                 WorkflowOptions
@@ -111,7 +110,7 @@ class DocumentHelper(
                     .setTaskList(taskList)
                     .build()
             val workflow =
-                workflowClient.newWorkflowStub(DocumentWorkflow::class.java, options)
+                workflowClient.newWorkflowStub(ReportWorkflow::class.java, options)
             val execution =
                 WorkflowClient.start(workflow::editMetadata, document.id)
             logger.info { "Started workflow ${execution.workflowId}" }
@@ -121,16 +120,15 @@ class DocumentHelper(
         }
     }
 
-    fun approveDocument(documentId: UUID) {
-        val document =
-            repository.findByIdOrNull(documentId) ?: throw EntityNotFoundException("Document not found: $documentId")
+    fun approveReport(reportId: UUID) {
+        val document = repository.findReport(reportId)
         if (document.approved) {
             assert(document.workflowId == null)
             return
         }
 
         val workflow =
-            workflowClient.newWorkflowStub(DocumentWorkflow::class.java, document.workflowId)
+            workflowClient.newWorkflowStub(ReportWorkflow::class.java, document.workflowId)
         workflow.approve()
     }
 }

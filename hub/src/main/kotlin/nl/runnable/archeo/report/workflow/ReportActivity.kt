@@ -1,15 +1,12 @@
-package nl.runnable.archeo.document.workflow
+package nl.runnable.archeo.report.workflow
 
 import com.uber.cadence.activity.ActivityMethod
-import jakarta.persistence.EntityNotFoundException
-import nl.runnable.archeo.document.NerHelper
-import nl.runnable.archeo.document.jpa.DocumentEntityRepository
-import org.springframework.data.repository.findByIdOrNull
+import nl.runnable.archeo.report.NerHelper
+import nl.runnable.archeo.report.jpa.ReportEntityRepository
 import org.springframework.stereotype.Component
-import tools.jackson.databind.ObjectMapper
 import java.util.UUID
 
-interface DocumentActivity {
+interface ReportActivity {
     @ActivityMethod(scheduleToCloseTimeoutSeconds = 10)
     fun extractNamedEntities(
         id: UUID,
@@ -27,10 +24,10 @@ interface DocumentActivity {
 }
 
 @Component
-class DocumentActivityImpl(
-    private val repository: DocumentEntityRepository,
+class ReportActivityImpl(
+    private val repository: ReportEntityRepository,
     private val nerHelper: NerHelper,
-) : DocumentActivity {
+) : ReportActivity {
     override fun extractNamedEntities(
         id: UUID,
         workflowId: String,
@@ -42,16 +39,25 @@ class DocumentActivityImpl(
         documentId: UUID,
         entities: List<Map<String, String>>,
     ) {
-        val document =
-            repository.findByIdOrNull(documentId) ?: throw EntityNotFoundException("Document not found: $documentId")
-        val json = ObjectMapper().writeValueAsString(entities)
-        document.namedEntities = json
+        val namedEntities = LinkedHashMap<String, LinkedHashSet<String>>()
+        entities.forEach { item ->
+            item.forEach { (key, value) ->
+                if (!namedEntities.containsKey(key)) {
+                    namedEntities[key] = LinkedHashSet()
+                }
+                namedEntities[key]?.add(value)
+            }
+        }
+
+        val document = repository.findReport(documentId)
+        document.namedEntities = namedEntities
         repository.save(document)
     }
 
     override fun approve(documentId: UUID) {
-        val document =
-            repository.findByIdOrNull(documentId) ?: throw EntityNotFoundException("Document not found: $documentId")
+        val document = repository.findReport(documentId)
+        checkNotNull(document.namedEntities)
+        check(!document.approved)
         document.approved = true
         document.workflowId = null
         repository.save(document)

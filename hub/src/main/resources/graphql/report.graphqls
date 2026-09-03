@@ -1,0 +1,30 @@
+type Query {
+    getReport(id: ID!): Report
+
+    listReports(page: Int!, size:Int!): ReportPage!
+}
+
+type Mutation {
+    acquireReports: Boolean!
+    startWorkflows: Boolean!
+    approveReport(id: ID!): Boolean!
+}
+
+type NamedEntity {
+    group: String!
+    tokens: [String!]
+}
+
+type Report {
+    id: ID!
+    filename: String!
+    approved: Boolean!
+    workflowActive: Boolean!
+    namedEntities: [NamedEntity!]
+}
+
+type ReportPage {
+    items: [Report!]!
+    totalPages: Int!
+    totalElements: Int!
+}

@@ -9,8 +9,8 @@ import com.uber.cadence.serviceclient.IWorkflowService
 import com.uber.cadence.serviceclient.WorkflowServiceTChannel
 import com.uber.cadence.worker.WorkerFactory
 import io.github.oshai.kotlinlogging.KotlinLogging
-import nl.runnable.archeo.document.workflow.DocumentActivity
-import nl.runnable.archeo.document.workflow.DocumentWorkflowImpl
+import nl.runnable.archeo.report.workflow.ReportActivity
+import nl.runnable.archeo.report.workflow.ReportWorkflowImpl
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.context.event.ApplicationStartedEvent
@@ -78,9 +78,9 @@ class CadenceConfig {
         val factory = WorkerFactory.newInstance(workflowClient)
         val worker = factory.newWorker(taskList)
         worker.registerWorkflowImplementationTypes(
-            DocumentWorkflowImpl::class.java,
+            ReportWorkflowImpl::class.java,
         )
-        worker.registerActivitiesImplementations(applicationContext.getBean<DocumentActivity>())
+        worker.registerActivitiesImplementations(applicationContext.getBean<ReportActivity>())
         factory.start()
     }
 }

@@ -1,11 +1,9 @@
-package nl.runnable.archeo.document
+package nl.runnable.archeo.report
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
-import jakarta.persistence.EntityNotFoundException
-import nl.runnable.archeo.document.jpa.DocumentEntityRepository
+import nl.runnable.archeo.report.jpa.ReportEntityRepository
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.client.SimpleClientHttpRequestFactory
@@ -19,7 +17,7 @@ private val logger = KotlinLogging.logger {}
 
 @Component
 class NerHelper(
-    private val repository: DocumentEntityRepository,
+    private val repository: ReportEntityRepository,
     private val s3Client: S3Client,
 ) {
     @Value($$"${ner.baseUrl}")
@@ -41,11 +39,10 @@ class NerHelper(
     }
 
     fun extractNamedEntities(
-        entityId: UUID,
+        reportId: UUID,
         workflowId: String,
     ) {
-        val document =
-            repository.findByIdOrNull(entityId) ?: throw EntityNotFoundException("Document not found: $entityId")
+        val document = repository.findReport(reportId)
         val data =
             try {
                 s3Client.getObjectAsBytes { request -> request.bucket(bucket).key(document.filename) }.asByteArray()
@@ -54,7 +51,7 @@ class NerHelper(
                 throw NoSuchElementException("Object not found: ${document.filename}")
             }
 
-        logger.info { "Extracting Named Entities from $entityId" }
+        logger.info { "Extracting Named Entities from $reportId" }
         val response =
             restClient
                 .post()
