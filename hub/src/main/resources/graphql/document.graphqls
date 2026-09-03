@@ -5,13 +5,15 @@ type Query {
 }
 
 type Mutation {
-    syncInbox: Boolean!
+    acquireDocuments: Boolean!
+    startWorkflows: Boolean!
+    approveDocument(id: ID!): Boolean!
 }
 
 type Document {
     id: ID!
     filename: String!
-    status: String
+    approved: Boolean!
 }
 
 type DocumentPage {

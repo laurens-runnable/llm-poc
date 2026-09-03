@@ -16,9 +16,12 @@ class DocumentEntity {
     @Column(name = "filename", nullable = false)
     lateinit var filename: String
 
-    @Column(name = "status", nullable = true)
-    var status: String? = null
-
-    @Column(name = "named_entities", nullable = true, length = 8192)
+    @Column(name = "named_entities", length = 8192)
     var namedEntities: String? = null
+
+    @Column(name = "workflow_id")
+    var workflowId: String? = null
+
+    @Column(name = "approved", nullable = false)
+    var approved: Boolean = false
 }

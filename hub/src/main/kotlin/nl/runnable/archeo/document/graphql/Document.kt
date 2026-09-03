@@ -6,7 +6,7 @@ import java.util.UUID
 class Document(
     val id: UUID,
     val filename: String,
-    val status: String?,
+    val approved: Boolean,
 )
 
-fun DocumentEntity.toDocument(): Document = Document(id, filename, status)
+fun DocumentEntity.toDocument(): Document = Document(id, filename, approved)

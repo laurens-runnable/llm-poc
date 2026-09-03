@@ -1,6 +1,6 @@
 package nl.runnable.archeo.document.graphql
 
-import nl.runnable.archeo.document.DocumentSyncHelper
+import nl.runnable.archeo.document.DocumentHelper
 import nl.runnable.archeo.document.jpa.DocumentEntityRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.repository.findByIdOrNull
@@ -13,7 +13,7 @@ import java.util.UUID
 @Controller
 class DocumentController(
     private val repository: DocumentEntityRepository,
-    private val helper: DocumentSyncHelper,
+    private val helper: DocumentHelper,
 ) {
     @QueryMapping
     fun getDocument(
@@ -27,8 +27,22 @@ class DocumentController(
     ): DocumentPage = repository.findAll(PageRequest.of(page, size)).toDocumentPage()
 
     @MutationMapping
-    fun syncInbox(): Boolean {
-        helper.syncInbox()
+    fun acquireDocuments(): Boolean {
+        helper.acquireDocuments()
+        return true
+    }
+
+    @MutationMapping
+    fun startWorkflows(): Boolean {
+        helper.startWorkflows()
+        return true
+    }
+
+    @MutationMapping
+    fun approveDocument(
+        @Argument id: UUID,
+    ): Boolean {
+        helper.approveDocument(id)
         return true
     }
 }

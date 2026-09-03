@@ -6,6 +6,8 @@ Docker containers for local development.
 * [Cadence Workflow](https://cadenceworkflow.io/)
 * [SeaweedFS](https://seaweedfs.com/)
 
+## Run containers
+
 ```bash
 # Start
 ./bin/start.sh
@@ -17,15 +19,18 @@ Docker containers for local development.
 ./bin/stop.sh
 ```
 
-## S3 usage
-
-Seaweed S3 is configured with the following credentials:  
-[`config/seaweedfs_s3/s3-users.json`](config/seaweedfs_s3/s3-users.json)
+## Workflow
 
 ```bash
-# Connect using AWS CLI
-export AWS_ACCESS_KEY_ID=admin
-export AWS_SECRET_ACCESS_KEY=admin
-aws --endpoint-url http://localhost:8333 s3 ls
+# Start workflow for given document
+./bin/workflow/start.sh <document_d>
 
+# List workflows
+./bin/workflow/list
+
+# List open workflows
+./bin/workflow/list --open
+
+# Show workflow details
+./bin/workflow/list <workflow_id>
 ```

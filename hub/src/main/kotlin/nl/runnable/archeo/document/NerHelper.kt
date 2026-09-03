@@ -9,12 +9,11 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.client.SimpleClientHttpRequestFactory
-import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException
-import java.util.*
+import java.util.UUID
 
 private val logger = KotlinLogging.logger {}
 
@@ -26,10 +25,10 @@ class NerHelper(
     @Value($$"${ner.baseUrl}")
     lateinit var baseUrl: String
 
-    lateinit var restClient: RestClient
-
     @Value($$"${workflow.work-bucket}")
     lateinit var bucket: String
+
+    lateinit var restClient: RestClient
 
     @PostConstruct
     fun createRestClient() {
@@ -41,7 +40,7 @@ class NerHelper(
                 .build()
     }
 
-    fun extractEntities(
+    fun extractNamedEntities(
         entityId: UUID,
         workflowId: String,
     ) {
@@ -55,17 +54,17 @@ class NerHelper(
                 throw NoSuchElementException("Object not found: ${document.filename}")
             }
 
-        logger.info { "Extracting entities from $entityId" }
+        logger.info { "Extracting Named Entities from $entityId" }
         val response =
             restClient
                 .post()
-                .uri("/ner/{id}", workflowId)
+                .uri("/ner/{workflowId}", workflowId)
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(data)
                 .retrieve()
                 .toBodilessEntity()
-        if (response.statusCode != HttpStatus.NO_CONTENT) {
-            logger.error { "Unexpected response: " }
+        if (response.statusCode != HttpStatus.ACCEPTED) {
+            logger.error { "Unexpected response from NER API: ${response.statusCode}" }
         }
     }
 }

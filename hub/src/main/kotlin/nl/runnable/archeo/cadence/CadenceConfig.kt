@@ -35,9 +35,9 @@ class CadenceConfig {
     lateinit var taskList: String
 
     @Value($$"${cadence.domain.retention}")
-    val retention: Int = 0
+    var retention: Int = 0
 
-    @Bean
+    @Bean(destroyMethod = "close")
     fun workflowService(): IWorkflowService =
         WorkflowServiceTChannel(
             ClientOptions

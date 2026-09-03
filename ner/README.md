@@ -9,7 +9,7 @@
 ```bash
 # Dependencies
 # Ignore python version, due to cadence-workflow-client Requires-Python >=3.11,<3.14
-pip install -r requirements.txt --ignore-requires-python 
+pip install -r requirements.txt --ignore-requires-python
 
 # Load model from Hugging Face and save to 'data' directory for offline use.
 python3 scripts/load_model.py

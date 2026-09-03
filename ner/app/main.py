@@ -4,7 +4,20 @@ from fastapi import FastAPI, Request, Depends, Header, HTTPException, Background
 from transformers import pipeline, AutoModelForTokenClassification, AutoTokenizer
 from unstructured.partition.pdf import partition_pdf
 from cadence import Client
-import asyncio
+import logging
+
+CADENCE_DOMAIN = "archeo-domain"
+CADENCE_TARGET = "localhost:7833"
+CADENCE_WORKFLOW = "DocumentWorkflow::setNamedEntities"
+
+logging.basicConfig()
+logging.root.setLevel(logging.WARNING)
+
+# Get rid of excessive PDF logging
+logging.getLogger("pdfminer.pdfinterp").setLevel(logging.ERROR)
+
+logger = logging.getLogger("ner")
+logger.setLevel(logging.INFO)
 
 model_path = "./data/ArcheoBERTje-NER"
 model = AutoModelForTokenClassification.from_pretrained(model_path, local_files_only=True)
@@ -53,10 +66,11 @@ async def process_content(workflow_id: str, content_type: str, body: bytes):
             "word": entity['word'],
         })
 
-    async with Client(domain="archeo-domain", target="localhost:7833") as client:
+    logger.info("Sending %s signal: %s", CADENCE_WORKFLOW, named_entities)
+    async with Client(domain=CADENCE_DOMAIN, target=CADENCE_TARGET) as client:
         await client.signal_workflow(
             workflow_id,
             "",
-            "DocumentWorkflow::setEntities",
+            CADENCE_WORKFLOW,
             named_entities
         )
