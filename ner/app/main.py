@@ -43,7 +43,6 @@ async def ner(workflow_id: str, request: Request, content_type: Annotated[str, H
 async def process_content(workflow_id: str, content_type: str, body: bytes):
     if content_type == 'application/pdf':
         elements = partition_pdf(file=BytesIO(body), languages=["nld"])
-        elements = [i for i in elements if i.category == 'NarrativeText']
         text = ''
         for element in elements:
             text += element.text + "\n"
