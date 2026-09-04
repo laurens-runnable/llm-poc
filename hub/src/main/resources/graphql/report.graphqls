@@ -1,3 +1,5 @@
+scalar DateTime
+
 type Query {
     getReport(id: ID!): Report
 
@@ -21,6 +23,8 @@ type Report {
     approved: Boolean!
     workflowActive: Boolean!
     namedEntities: [NamedEntity!]
+    createdAt: DateTime!
+    modifiedAt: DateTime!
 }
 
 type ReportPage {
