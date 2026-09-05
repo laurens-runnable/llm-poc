@@ -37,8 +37,7 @@ async def verify_content_type(content_type: Annotated[str, Header()]):
 async def ner(workflow_id: str, request: Request, content_type: Annotated[str, Header()],
               background_tasks: BackgroundTasks):
     body = await request.body()
-    await process_content(workflow_id, content_type, body)
-    # background_tasks.add_task(process_content, workflow_id, content_type, body)
+    background_tasks.add_task(process_content, workflow_id, content_type, body)
 
 
 async def process_content(workflow_id: str, content_type: str, body: bytes):
