@@ -8,6 +8,9 @@ import java.util.UUID
 
 interface ReportActivity {
     @ActivityMethod(scheduleToCloseTimeoutSeconds = 10)
+    fun getFilename(reportId: UUID): String
+
+    @ActivityMethod(scheduleToCloseTimeoutSeconds = 10)
     fun extractNamedEntities(
         id: UUID,
         workflowId: String,
@@ -15,7 +18,7 @@ interface ReportActivity {
 
     @ActivityMethod(scheduleToCloseTimeoutSeconds = 10)
     fun saveNamedEntities(
-        documentId: UUID,
+        reportId: UUID,
         entities: List<Map<String, String>>,
     )
 
@@ -28,6 +31,8 @@ class ReportActivityImpl(
     private val repository: ReportEntityRepository,
     private val nerHelper: NerHelper,
 ) : ReportActivity {
+    override fun getFilename(reportId: UUID) = repository.findReport(reportId).filename
+
     override fun extractNamedEntities(
         id: UUID,
         workflowId: String,
@@ -36,7 +41,7 @@ class ReportActivityImpl(
     }
 
     override fun saveNamedEntities(
-        documentId: UUID,
+        reportId: UUID,
         entities: List<Map<String, String>>,
     ) {
         val namedEntities = LinkedHashMap<String, LinkedHashSet<String>>()
@@ -49,7 +54,7 @@ class ReportActivityImpl(
             }
         }
 
-        val document = repository.findReport(documentId)
+        val document = repository.findReport(reportId)
         document.namedEntities = namedEntities
         repository.save(document)
     }

@@ -4,3 +4,4 @@ fastapi[standard] == 0.141.1
 unstructured[pdf] == 0.18.32
 uvicorn == 0.52.4
 cadence-python-client == 0.3.0
+light-s3-client == 0.0.40

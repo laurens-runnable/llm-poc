@@ -19,7 +19,6 @@ import software.amazon.awssdk.services.s3.model.NoSuchBucketException
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException
 import java.time.Duration
 import java.util.UUID
-import kotlin.jvm.java
 
 private val logger = KotlinLogging.logger {}
 
@@ -106,13 +105,13 @@ class ReportHelper(
             val options =
                 WorkflowOptions
                     .Builder()
-                    .setExecutionStartToCloseTimeout(Duration.ofSeconds(3600))
+                    .setExecutionStartToCloseTimeout(Duration.ofHours(1))
                     .setTaskList(taskList)
                     .build()
             val workflow =
                 workflowClient.newWorkflowStub(ReportWorkflow::class.java, options)
             val execution =
-                WorkflowClient.start(workflow::editMetadata, document.id)
+                WorkflowClient.start(workflow::run, document.id)
             logger.info { "Started workflow ${execution.workflowId}" }
 
             document.workflowId = execution.workflowId

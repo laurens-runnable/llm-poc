@@ -57,7 +57,6 @@ class CadenceConfig {
     @EventListener(ApplicationStartedEvent::class)
     fun registerDomain(event: ApplicationStartedEvent) {
         val workflowService = event.applicationContext.getBean<IWorkflowService>()
-        logger.info { "Registering Cadence domain '$domain'" }
         val request = RegisterDomainRequest()
         request.setName(domain)
         request.setEmitMetric(false)
@@ -65,6 +64,7 @@ class CadenceConfig {
 
         try {
             workflowService.RegisterDomain(request)
+            logger.info { "Registerd Cadence domain '$domain'" }
         } catch (_: DomainAlreadyExistsError) {
         } catch (e: Exception) {
             logger.error { "Error registering Cadence domain '$domain': $e.message" }

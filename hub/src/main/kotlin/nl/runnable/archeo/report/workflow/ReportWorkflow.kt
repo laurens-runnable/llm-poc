@@ -1,14 +1,21 @@
 package nl.runnable.archeo.report.workflow
 
+import com.uber.cadence.workflow.Async
+import com.uber.cadence.workflow.ChildWorkflowOptions
 import com.uber.cadence.workflow.SignalMethod
 import com.uber.cadence.workflow.Workflow
 import com.uber.cadence.workflow.WorkflowMethod
 import org.slf4j.Logger
+import java.time.Duration
 import java.util.UUID
+
+private val workflowLogger: Logger = Workflow.getLogger(ReportWorkflowImpl::class.java)
+
+private const val NER_TASK_LIST = "ner-task-list"
 
 interface ReportWorkflow {
     @WorkflowMethod
-    fun editMetadata(reportId: UUID)
+    fun run(reportId: UUID)
 
     @SignalMethod
     fun setNamedEntities(entities: List<Map<String, String>>)
@@ -17,8 +24,6 @@ interface ReportWorkflow {
     fun approve()
 }
 
-private val workflowLogger: Logger = Workflow.getLogger(ReportWorkflowImpl::class.java)
-
 class ReportWorkflowImpl : ReportWorkflow {
     val activity = Workflow.newActivityStub(ReportActivity::class.java)!!
 
@@ -26,10 +31,29 @@ class ReportWorkflowImpl : ReportWorkflow {
 
     var approved = false
 
-    override fun editMetadata(reportId: UUID) {
+    override fun run(reportId: UUID) {
         workflowLogger.info("Report workflow started: {}", reportId)
 
-        activity.extractNamedEntities(reportId, Workflow.getWorkflowInfo().workflowId)
+        val filename = activity.getFilename(reportId)
+        val nerWorkflow =
+            Workflow.newChildWorkflowStub(
+                NerWorkflow::class.java,
+                ChildWorkflowOptions
+                    .Builder()
+                    .setTaskList(NER_TASK_LIST)
+                    .setExecutionStartToCloseTimeout(
+                        Duration.ofHours(1),
+                    ).build(),
+            )
+
+        val workflowId = Workflow.getWorkflowInfo().workflowId
+
+//        Async.procedure(nerWorkflow::run, filename, workflowId)
+//        val childExecution = Workflow.getWorkflowExecution(nerWorkflow)
+//        childExecution.get()
+
+        activity.extractNamedEntities(reportId, workflowId)
+        workflowLogger.info("Awaiting Named Entity Recognition")
         Workflow.await { namedEntities.isNotEmpty() }
         workflowLogger.info("Saving Named Entities: {}", namedEntities)
         activity.saveNamedEntities(reportId, namedEntities)

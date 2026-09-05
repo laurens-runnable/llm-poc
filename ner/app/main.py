@@ -1,14 +1,15 @@
+import logging
+
 from io import BytesIO
 from typing import Annotated
 from fastapi import FastAPI, Request, Depends, Header, HTTPException, BackgroundTasks
 from transformers import pipeline, AutoModelForTokenClassification, AutoTokenizer
 from unstructured.partition.pdf import partition_pdf
 from cadence import Client
-import logging
 
 CADENCE_DOMAIN = "archeo-domain"
 CADENCE_TARGET = "localhost:7833"
-CADENCE_WORKFLOW = "ReportWorkflow::setNamedEntities"
+CADENCE_REPORT_WORKFLOW_SIGNAL = "ReportWorkflow::setNamedEntities"
 
 logging.basicConfig()
 logging.root.setLevel(logging.WARNING)
@@ -64,11 +65,11 @@ async def process_content(workflow_id: str, content_type: str, body: bytes):
             entity['entity_group']: entity['word'],
         })
 
-    logger.info("Sending %s signal: %s", CADENCE_WORKFLOW, named_entities)
+    logger.info("Sending %s signal to workflow %s: %s", CADENCE_REPORT_WORKFLOW_SIGNAL, workflow_id, named_entities)
     async with Client(domain=CADENCE_DOMAIN, target=CADENCE_TARGET) as client:
         await client.signal_workflow(
             workflow_id,
             "",
-            CADENCE_WORKFLOW,
+            CADENCE_REPORT_WORKFLOW_SIGNAL,
             named_entities
         )
